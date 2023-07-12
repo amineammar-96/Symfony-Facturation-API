@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8"/>
+		<title>
+			{% block title %}SAPS
+			{% endblock %}
+		</title>
+		<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>⚫️</text></svg>"/>
+<script>
+    window.onload = function() {
+      var tableHeaders = document.querySelectorAll('.invoiceDescription thead');
+
+      for (var i = 1; i < tableHeaders.length; i++) {
+        tableHeaders[i].style.display = 'none';
+      }
+    };
+  </script>
+
+		<style>
+			h1,
+			h2,
+			h3,
+			h4,
+			h5 {
+				font-size: 1.1rem;
+			}
+		@page {
+				size: landscape; /* Set page size to landscape */
+				margin: 0;
+			}
+
+			html,
+			body {
+				background: #ffffff;
+				width: 100%;
+				height: 100%;
+				margin: 0;
+				padding: 0;
+			}
+
+			.pdfFileMain {
+				width: 100%;
+				height: 100%;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				flex-direction: row; /* Change flex-direction to row */
+            transform: rotate(-90deg); /* Rotate the entire page */
+            transform-origin: left top;
+			}
+
+			.invoicePaidImage {
+				position: absolute;
+				top: 70%;
+				right: 5%;
+
+
+			}
+
+			.invoicePaidImage img {
+				width: 180px;
+				height: 80px;
+
+			}
+
+			.invoice {
+				font-weight: 100;
+				width: 100%;
+				box-sizing: border-box;
+				border-radius: 5px;
+				background: #fff;
+				min-height: 100%;
+				height: 100%;
+				padding: 0;
+				page-break-after: always;
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				flex-direction: column;
+			
+			}
+
+			
+			
+
+			.header {
+				display: flex;
+				width: 100%;
+				border-bottom: 1px solid black;
+				justify-content: center;
+				align-items: center;
+				flex-direction: column;
+
+			}
+			.invoiceTopHeader {
+				width: 100%;
+				display: flex;
+				margin: 30px 0;
+				justify-content: center;
+				align-items: center;
+			}
+
+			.invoiceHeaderDescription {
+				width: 100%;
+				display: flex;
+				justify-content: space-between;
+				flex-direction: row;
+
+
+			}
+
+
+			.invoiceDate,
+			.invoiceNumber {
+				font-size: 1.1rem;
+				color: #494949;
+			}
+
+			.invoiceHeader {
+				font-size: 1.1rem;
+				width: 100%;
+				font-weight: 900;
+
+			}
+			.invoiceAddress {
+				font-size: 1.1rem;
+				padding: 0 4px 4px;
+				text-align: left;
+
+				margin-bottom: 30px;
+			}
+
+
+			.invoiceAddressAux {
+				font-size: 1.1rem;
+				padding: 0 4px 4px;
+				text-align: left;
+			}
+			.description {
+				margin: auto;
+				text-align: justify;
+			}
+
+			.descriptionAux {
+				margin: 120px 120px 40px;
+				text-align: center;
+			}
+
+			.invoiceDescription {
+				width: 100%;
+
+				padding: 10px;
+			}
+			.invoiceDescription thead {
+				background: #ddd;
+				color: #111;
+				padding: 12px 0;
+				text-align: center;
+				font-weight: 800;
+				font-size: 1.1rem;
+				line-height: 4rem;
+
+			}
+			.invoiceDescription tbody {
+				text-align: left;
+
+			}
+			.invoiceDescription .total-price {
+				border: 1px solid black;
+				font-weight: 900;
+				color: #111;
+				background: #ddd;
+				font-size: 1.2rem;
+				line-height: 4rem;
+				text-align: center;
+			}
+
+			
+
+
+			.invoiceAddress strong {
+				font-size: 1.2rem;
+				font-weight: bold;
+			}
+
+			.pdfFileMain h1 {
+				text-align:center;
+				font-size:1.4rem;
+				margin:20px 0px;
+			}
+
+			.invoiceDescription thead:first-of-type {
+				display: table-header-group !important;
+				background: #F0F0F0;
+				color: #111;
+				padding: 12px 0;
+				text-align: center;
+				font-weight: 800;
+				font-size: 1.1rem;
+				line-height: 4rem;
+			}
+
+.invoiceDescription tr {
+    page-break-inside: avoid; 
+  }
+
+  .invoiceDescription td:first-child,
+  .invoiceDescription td:nth-child(2) {
+    page-break-after: always; 
+  }
+
+
+.invoiceDescription  td {
+				border-bottom: 2px solid #F0F0F0;
+			
+
+			}
+
+			.invoiceDescription .historyDiv td {
+				border-bottom: 2px solid gray;
+				padding: 60px 0;
+				font-size: 1.2rem;
+
+			}
+
+			
+			
+
+		</style>
+	</head>
+	<body>
+		{% block body %}
+
+				<div class="pdfFileMain">
+					<div class="invoiceTopHeader">
+						<img src="https://api.confident-darwin.212-227-197-242.plesk.page/assets/images/logoAux.png" alt=""/>
+					</div>
+				
+					
+				
+					<div class="invoice">
+						<div class="">
+							<table class="invoiceDescription">
+								<thead style="">
+									<tr>
+										<td class="">N° facture</td>
+										<td>Centre</td>
+<td>Client</td>
+<td class="">Date</td>
+										<td>Montant TTC</td>
+<td>Total Payé TTC</td>
+									</tr>
+								</thead>
+								<tbody>
+			{% for invoice in invoices %}
+
+			<tr class="invoiceDivTr">												
+				<td style="text-align: center; padding: 25px !important; ">										
+						<span style="text-align: center; padding: 25px !important; ">{{ invoice["Nfacture"] }}</span>
+				</td>							
+			
+
+														
+				<td style="text-align: left;">										
+						{{ invoice["Centre"] }}
+				</td>							
+			
+
+														
+				<td style="text-align: left;">										
+						{{ invoice["Client"] }}
+				</td>							
+			
+
+														
+				<td style="text-align: center;">										
+						{{ invoice["date_fact"] }}
+				</td>							
+		
+
+														
+				<td style="text-align: center;">										
+						{{ invoice["amountTtc"] }} €
+				</td>							
+			
+
+													
+				<td style="text-align: center;">										
+						{{ invoice["totalPaid"] }} €
+				</td>							
+			</tr>
+
+            {% if invoice["transactions"] is not empty %}
+
+			<tr class="historyDiv" style="margin-bottom:14px !important;">
+							<td colspan="2" style="text-align:center;">Historique paiements ({{ invoice["Nfacture"] }})</td>
+														<td colspan="1" style="text-align:center;">
+														 Status: {% if invoice["status"] == "paid" %}
+    Payée
+  {% elseif invoice["status"] == "open" %}
+    Partielle
+  {% else %}
+	Non Payée
+
+  {% endif %}
+														</td>
+
+				<td colspan="3" style="text-align:center;">
+					{% for transaction in invoice["transactions"] %}
+						<span> {{ transaction }} </span> <br/>
+					{% endfor %}
+				</td>
+			</tr>
+			{% endif %}
+{% endfor %}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+									
+								</tbody>
+							</table>
+						</div>
+						
+						
+						
+
+					</div>
+
+
+			{% endblock %}
+	</body>
+</html>

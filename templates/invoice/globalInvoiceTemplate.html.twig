@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8"/>
+		<title>
+			{% block title %}SAPS
+			{% endblock %}
+		</title>
+		<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>⚫️</text></svg>"/>
+
+		<style>
+			h1,
+			h2,
+			h3,
+			h4,
+			h5 {
+				font-size: 1.1rem;
+			}
+			@page {
+				size: A4;
+				margin: 0;
+			}
+
+			html,
+			body {
+				background: #ffffff;
+				width: 100%;
+				height: 100%;
+				margin: 0;
+				padding: 0;
+			}
+
+			.pdfFileMain {
+				width: 100%;
+				height: 100%;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				flex-direction: column;
+			}
+
+			.invoicePaidImage {
+				position: absolute;
+				top: 70%;
+				right: 5%;
+
+
+			}
+
+			.invoicePaidImage img {
+				width: 180px;
+				height: 80px;
+
+			}
+
+			.invoice {
+				font-weight: 100;
+				width: 100%;
+				box-sizing: border-box;
+				border-radius: 5px;
+				background: #fff;
+				min-height: 100%;
+				height: 100%;
+				padding: 0;
+				page-break-after: always;
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				flex-direction: column;
+			}
+
+			.header {
+				display: flex;
+				width: 100%;
+				border-bottom: 1px solid #eee;
+				justify-content: center;
+				align-items: center;
+				flex-direction: column;
+
+			}
+			.invoiceTopHeader {
+				width: 100%;
+				display: flex;
+				margin: 30px 0;
+				justify-content: center;
+				align-items: center;
+			}
+
+			.invoiceHeaderDescription {
+				width: 100%;
+				display: flex;
+				justify-content: space-between;
+				flex-direction: row;
+
+
+			}
+
+
+			.invoiceDate,
+			.invoiceNumber {
+				font-size: 1.1rem;
+				color: #494949;
+			}
+
+			.invoiceHeader {
+				font-size: 1.1rem;
+				width: 100%;
+				font-weight: 900;
+
+			}
+			.invoiceAddress {
+				font-size: 1.1rem;
+				padding: 0 4px 4px;
+				text-align: left;
+
+				margin-bottom: 30px;
+			}
+
+
+			.invoiceAddressAux {
+				font-size: 1.1rem;
+				padding: 0 4px 4px;
+				text-align: left;
+			}
+			.description {
+				margin: auto;
+				text-align: justify;
+			}
+
+			.descriptionAux {
+				margin: 120px 120px 40px;
+				text-align: center;
+			}
+
+			.invoiceDescription {
+				width: 100%;
+
+				padding: 10px;
+			}
+			.invoiceDescription thead {
+				background: #F0F0F0;
+				color: #111;
+				padding: 12px 0;
+				text-align: center;
+				font-weight: 800;
+				font-size: 1.1rem;
+				line-height: 4rem;
+
+			}
+			.invoiceDescription tbody {
+				text-align: left;
+
+			}
+			.invoiceDescription .total-price {
+				border: 1px solid #ddd;
+				font-weight: 900;
+				color: #111;
+				background: #ddd;
+				font-size: 1.2rem;
+				line-height: 4rem;
+				text-align: center;
+			}
+
+			.invoiceDescription tr,
+			.invoiceDescription td {
+				border: 1px solid #f6f6f6;
+				line-height: 4rem;
+
+				font-size: 1.2rem;
+
+			}
+
+
+			.invoiceAddress strong {
+				font-size: 1.2rem;
+				font-weight: bold;
+			}
+
+			.pdfFileMain h1 {
+				text-align:center;
+				font-size:1.4rem;
+				margin:20px 0px;
+			}
+		</style>
+	</head>
+	<body>
+		{% block body %}
+
+				<div class="pdfFileMain">
+					<div class="invoiceTopHeader">
+						<img src="https://api.confident-darwin.212-227-197-242.plesk.page/assets/images/logoAux.png" alt=""/>
+					</div>
+				
+					<h1 style="text-align: center; margin-left:0px;">									<span style="background-color:#ddd;  padding: 15px 20px; margin:25px 0; text-align:center">	RELEVE DE FACTURES MENSUELLES {{ globalInvoiceDetails.formattedMonth }} </span>
+					</h1>
+
+						<p style="text-align: right; margin-left:15px;">	
+{{ globalInvoiceDetails.period }}		</p>
+
+				
+												<p style="text-align: right; margin-left:15px;">	
+Conditions de paiement:  {{ globalInvoiceDetails.method }}
+</p>
+				
+					<div class="invoiceHeader">
+						<table class="invoiceHeaderDescription">
+							<tr style=" width:100%;">
+								<td>
+									<div style="margin-left: 15px;" class="invoiceAddress">
+										S.A.P.S
+										<br/>
+										37, av. Jean Jaurès
+										<br/>
+										75019 PARIS
+										<br/>
+										France
+										<br/>
+										Tel: 06.14.08.31.83
+										<br/>
+									</div>
+
+								</td>
+								<td>
+									
+									
+
+								</td>
+							</tr>
+						
+						
+						</table>
+					</div>
+					<div class="invoice">
+						<div class="">
+							<table class="invoiceDescription">
+								<thead style="min-height: 120px;">
+									<tr>
+										<td class="tdDivAux">DESCRIPTION</td>
+										<td>Montant HT</td>
+<td>Montant TTC</td>
+									</tr>
+								</thead>
+								<tbody>
+			{% for invoice in subInvoices %}
+
+			
+																	<tr>
+																		<td style="padding: 10px; width: 70%; font-size:0.9rem; padding-right:20px; word-wrap: break-word;">
+																													{{ invoice.description }}
+								</td>
+																		<td style="text-align: center;">										    {{ invoice.amountHt|number_format(2) }} €
+
+								</td>
+
+								<td style="text-align: center;">										{{ invoice.amount|number_format(2) }} €
+								</td>
+																	</tr>
+
+{% endfor %}
+
+
+
+
+
+
+
+
+
+
+
+
+																	<tr>
+																		<td colspan="2"  style="padding-right: 0px;  padding-right:20px; text-align: right; font-size: 1rem;">TOTAL NET HT</td>
+																		<td style="text-align: center;">										{{ globalInvoiceDetails.totalAmountHt|number_format(2) }} €
+								</td>
+																	</tr>
+
+
+
+
+
+
+
+
+
+
+
+									<tr>
+										<td colspan="2" style="text-align:right ; padding-right:20px">
+											TVA
+										</td>
+
+										<td style="text-align: center;">
+
+
+										{{ globalInvoiceDetails.totalTva|number_format(2) }} €
+
+
+										</td>
+									</tr>
+									<tr>
+										<td colspan="2"  style="text-align:right ; padding-right:20px">
+											<strong>TOTAL FACTURES A REGLER TTC EN EUROS</strong>
+										</td>
+										<td  class="total-price">
+    {{ globalInvoiceDetails.total|number_format(2) }} €
+
+										</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+						
+						
+						<div class="descriptionAux">
+							<p>
+								S.A.P.S Numéro de TVA.I.C : FR 83 841181340
+								<br/>
+								SIRET : 841 181 340 00016 RCS Paris
+								<br/>
+								Au capital de 1.000 Euros Code APE : 7022Z
+								<br>
+								Siège social : 37, av. Jean Jaurès - 75019 Paris Tél :06 14 08 31 83
+								<br/>
+								Email : contact@web-saps.fr
+								<br>
+								Prestataire de formation : Déclaration d'activité
+								<br/>
+								Enregistré sous le numéro 11755830775 auprès du Préfet de région d'Ile de France
+								<br>
+							</p>
+
+
+						</div>
+
+					</div>
+
+
+			{% endblock %}
+	</body>
+</html>

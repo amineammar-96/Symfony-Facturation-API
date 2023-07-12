@@ -1,0 +1,207 @@
+controllers:
+  resource: ../src/Controller/
+  type: attribute
+
+invoicesapi:
+  path: /api/invoices
+  controller: App\Controller\InvoiceApisController::index
+  methods: [POST]
+
+
+generateGlobaleInvoice:
+  path: /api/generateGlobaleInvoice
+  controller: App\Controller\InvoiceApisController::generateGlobaleInvoice
+  methods: [POST]
+
+
+
+globalInvoicesPayment:
+  path: /api/globalInvoicesPayment
+  controller: App\Controller\InvoiceApisController::globalInvoicesPayment
+  methods: [POST]
+
+
+
+
+generateCsvFromInvoices:
+  path: /api/generateCsvFromInvoices
+  controller: App\Controller\InvoiceApisController::generateCsvFromInvoices
+  methods: [POST]
+
+
+
+generatePdfFromInvoices:
+  path: /api/generatePdfFromInvoices
+  controller: App\Controller\InvoiceApisController::generatePdfFromInvoices
+  methods: [POST]
+
+
+
+
+
+
+
+getInvoiceDetailsById:
+  path: /api/getInvoiceDetailsById
+  controller: App\Controller\InvoiceApisController::getInvoiceDetailsById
+  methods: [POST]
+
+
+deleteInvoicesArray:
+  path: /api/deleteInvoicesArray
+  controller: App\Controller\InvoiceApisController::deleteInvoicesArray
+  methods: [POST]
+
+  
+
+invoiceGenerate:
+  path: /api/invoices_generate
+  controller: App\Controller\InvoiceApisController::addNewInvoice
+  methods: [POST]
+
+invoiceGenerationProgress:
+  path: /api/invoices_progress
+  controller: App\Controller\InvoiceApisController::getInvoiceGenerationProgress
+  methods: [GET]
+  options:
+    cors: true
+
+download_invoice:
+  path: /api/download_invoice/{id}
+  controller: App\Controller\InvoiceApisController::downloadOneInvoice
+  methods: [GET]
+
+invoiceSendMail:
+  path: /api/invoice_send_mail
+  controller: App\Controller\InvoiceApisController::sendInvoiceMail
+  methods: [POST]
+
+invoiceEmailUpdate:
+  path: /api/invoice_email_update
+  controller: App\Controller\InvoiceApisController::updateInvoiceEmail
+  methods: [POST]
+
+invoiceRetreiveForPayment:
+  path: /api/invoice_retreive_payment
+  controller: App\Controller\InvoiceApisController::invoiceRetreiveForPayment
+  methods: [POST]
+
+mollieUserCreate:
+  path: /api/mollie_user_create
+  controller: App\Controller\MollieApisController::createUser
+  methods: [POST]
+
+mollieUserUpdate:
+  path: /api/mollie_user_update
+  controller: App\Controller\MollieApisController::updateMollieUser
+  methods: [POST]
+
+mollieUsersRetreive:
+  path: /api/mollie_users
+  controller: App\Controller\MollieApisController::index
+  methods: [GET]
+
+mollieUserCreateMandat:
+  path: /api/mollie_user_create_mandat
+  controller: App\Controller\MollieApisController::createMollieUserMandat
+  methods: [POST]
+
+mollieUserCreatePayment:
+  path: /api/mollie_user_create_payment
+  controller: App\Controller\MollieApisController::createMollieUserPayment
+  methods: [POST]
+
+getAllMandates:
+  path: /api/getAllMandates
+  controller: App\Controller\MollieApisController::getAllMandates
+  methods: [GET]
+
+getAllPayments:
+  path: /api/getAllPayments
+  controller: App\Controller\MollieApisController::getAllPayments
+  methods: [GET]
+
+getMandatByCustomerId:
+  path: /api/getMandatByCustomerId
+  controller: App\Controller\MollieApisController::getMandatByCustomerId
+  methods: [POST]
+
+mollie_payment_delete:
+  path: /api/mollie_payment_delete
+  controller: App\Controller\MollieApisController::deleteMolliePaymentById
+  methods: [POST]
+
+invoice_delete:
+  path: /api/invoice_delete
+  controller: App\Controller\InvoiceApisController::deleteInvoiceById
+  methods: [POST]
+
+
+
+
+statistics_invoice_generation:
+  path: /api/statistics_invoices_generation
+  controller: App\Controller\StatisticsApiController::getInvoicesGenerationStatistics
+  methods: [POST]
+
+
+
+statistics_invoices_allAmounts:
+  path: /api/statistics_invoices_allAmounts
+  controller: App\Controller\StatisticsApiController::getInvoicesAmounts
+  methods: [POST]
+
+
+statistics_invoices_amounts:
+  path: /api/statistics_invoices_amounts
+  controller: App\Controller\StatisticsApiController::getInvoicesGenerationStatisticsAndAmounts
+  methods: [POST]
+
+
+
+
+checkInvoicesPayment:
+  path: /api/checkInvoicesPayment
+  controller: App\Controller\MollieApisController::checkInvoicesPayment
+  methods: [POST]
+
+
+
+
+
+checkPaymentsInvoicesNumber:
+  path: /api/checkPaymentsInvoicesNumber
+  controller: App\Controller\MollieApisController::checkPaymentsInvoicesNumber
+  methods: [POST]
+
+
+
+
+
+
+
+
+getInvoiceTransactionByInvoiceNumber:
+  path: /api/getInvoiceTransactionByInvoiceNumber
+  controller: App\Controller\TransactionApisController::getInvoiceTransactionByInvoiceNumber
+  methods: [POST]
+
+
+
+
+addNewTransactionByInvoice:
+  path: /api/addNewTransactionByInvoice
+  controller: App\Controller\TransactionApisController::addNewTransactionByInvoice
+  methods: [POST]
+
+
+
+
+deleteTransactionHorsMolliePayments:
+  path: /api/deleteTransactionHorsMolliePayments
+  controller: App\Controller\TransactionApisController::deleteTransactionHorsMolliePayments
+  methods: [POST]
+
+
+
+

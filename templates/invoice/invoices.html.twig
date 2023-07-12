@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8"/>
+		<title>
+			{% block title %}SAPS
+			{% endblock %}
+		</title>
+		<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>⚫️</text></svg>"/>
+
+		<style>
+			h1,
+			h2,
+			h3,
+			h4,
+			h5 {
+				font-size: 1.1rem;
+			}
+			@page {
+				size: A4;
+				margin: 0;
+			}
+
+			html,
+			body {
+				background: #ffffff;
+				width: 100%;
+				height: 100%;
+				margin: 0;
+				padding: 0;
+			}
+
+			.pdfFileMain {
+				width: 100%;
+				height: 100%;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				flex-direction: column;
+			}
+
+			.invoicePaidImage {
+				position: absolute;
+				top: 70%;
+				right: 5%;
+
+
+			}
+
+			.invoicePaidImage img {
+				width: 180px;
+				height: 80px;
+
+			}
+
+			.invoice {
+				font-weight: 100;
+				width: 100%;
+				box-sizing: border-box;
+				border-radius: 5px;
+				background: #fff;
+				min-height: 100%;
+				height: 100%;
+				padding: 0;
+				page-break-after: always;
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				flex-direction: column;
+			}
+
+			.header {
+				display: flex;
+				width: 100%;
+				border-bottom: 1px solid #eee;
+				justify-content: center;
+				align-items: center;
+				flex-direction: column;
+
+			}
+			.invoiceTopHeader {
+				width: 100%;
+				display: flex;
+				margin: 30px 0;
+				justify-content: center;
+				align-items: center;
+			}
+
+			.invoiceHeaderDescription {
+				width: 100%;
+				display: flex;
+				justify-content: space-between;
+				flex-direction: row;
+
+
+			}
+
+
+			.invoiceDate,
+			.invoiceNumber {
+				font-size: 1.1rem;
+				color: #494949;
+			}
+
+			.invoiceHeader {
+				font-size: 1.1rem;
+				width: 100%;
+				font-weight: 900;
+
+			}
+			.invoiceAddress {
+				font-size: 1.1rem;
+				padding: 0 4px 4px;
+				text-align: left;
+				max-height: 400px;
+				margin-bottom: 30px;
+			}
+
+
+			.invoiceAddressAux {
+				font-size: 1.1rem;
+				padding: 0 4px 4px;
+				text-align: left;
+			}
+			.description {
+				margin: auto;
+				text-align: justify;
+			}
+
+			.descriptionAux {
+				margin: 120px 120px 40px;
+				text-align: center;
+			}
+
+			.invoiceDescription {
+				width: 100%;
+
+				padding: 10px;
+			}
+			.invoiceDescription thead {
+				background: #F0F0F0;
+				color: #111;
+				padding: 12px 0;
+				text-align: center;
+				font-weight: 800;
+				font-size: 1.1rem;
+				line-height: 4rem;
+
+			}
+			.invoiceDescription tbody {
+				text-align: left;
+
+			}
+			.invoiceDescription .total-price {
+				border: 1px solid #F0F0F0;
+				font-weight: 900;
+				color: #111;
+				background: #F0F0F0;
+				font-size: 1.2rem;
+				line-height: 4rem;
+				text-align: center;
+			}
+
+			.invoiceDescription tr,
+			.invoiceDescription td {
+				border: 1px solid #f6f6f6;
+				line-height: 4rem;
+
+				font-size: 1.2rem;
+
+			}
+
+
+			.invoiceAddress strong {
+				font-size: 1.2rem;
+				font-weight: bold;
+			}
+		</style>
+	</head>
+	<body>
+		{% block body %}
+			{% for invoice in invoices %}
+
+				<div class="pdfFileMain">
+					<div class="invoiceTopHeader">
+						<img src="https://api.confident-darwin.212-227-197-242.plesk.page/assets/images/logoAux.png" alt=""/>
+					</div>
+					{% set amount = invoice.getInvoiceAmountTtc()|replace({'€': '', ',': ''})|trim|number_format(2, '.', '') %}
+					{% set diff = amount - invoice.getTotalPaid() %}
+
+
+					{% if diff <= 0 %}
+						<div class="invoicePaidImage">
+							<img src="https://api.confident-darwin.212-227-197-242.plesk.page/assets/images/paid.png" alt=""/>
+						</div>
+					{% endif %}
+					<div class="invoiceHeader">
+						<table class="invoiceHeaderDescription">
+							<tr style="width:300px;">
+								<td>
+									<div class="invoiceAddress">
+										S.A.P.S
+										<br/>
+										37, av. Jean Jaurès
+										<br/>
+										75019 PARIS
+										<br/>
+										France
+										<br/>
+										Tel: 06.14.08.31.83
+										<br/>
+									</div>
+
+								</td>
+								<td>
+									<div class="invoiceAddress ">
+										<br/>
+										N° Facture:
+										{{ invoice.getInvoiceNumber() }}
+										<br/>
+										Date de facturation :
+										{{invoice.getInvoiceDate() }}
+										{# {{  invoice.getInvoiceDate() | date("d/m/Y") }} #}
+
+										<br/>
+										Condition de paiement :
+										{{ invoice.getInvoicePaymentCondition() }}
+										<br/>
+										Total facture :
+											{{ invoice.getInvoiceAmountTtc()|replace({'€': '', ',': '.' , ' ': ''}) }} €
+
+										<br/>
+										Montant déjà payé :
+											{{ invoice.getTotalPaid()|replace({' ': '', ',': '.' , ' ': ''})|number_format(2, '.', '')  }}
+											€
+
+										
+										<br/>
+										<span style=" font-weight:bold;">
+
+											{% set amount = invoice.getInvoiceAmountTtc()|replace({'€': '', ',': '.' , ' ': ''})|number_format(2, '.', '') %}
+											{% set totalPaid = invoice.getTotalPaid()|replace({'€': '', ',': '.' , ' ': ''})|number_format(2, '.', '') %}
+
+											Reste à payer:
+											{{ (amount -  totalPaid)|number_format(2, '.', ' ') }} € 
+												{# {{ amount }} #}
+
+											
+
+
+										</span>
+										<br/>
+									</div>
+
+								</td>
+							</tr>
+							<tr style="width:300px;">
+								<td>
+									<div class="invoiceAddress">
+										{{ invoice.getCompanyName() }}
+										<br>
+										{{ invoice.getClientName() }}
+										<br>
+										{{ invoice.getClientCompanyAddress() }}
+										<br>
+										{{ invoice.getClientCompanyPostalCode() }},
+
+										{{ invoice.getClientAddressCity() }}
+										<br>
+									</div>
+
+								</td>
+								<td>
+									<div class="invoiceAddressAux"></div>
+								</td>
+							</tr>
+						</table>
+					</div>
+					<div class="invoice">
+						<div class="">
+							<table class="invoiceDescription">
+								<thead style="min-height: 120px;">
+									<tr>
+										<td class="tdDivAux">DESCRIPTION</td>
+										<td>Montant HT</td>
+
+									</tr>
+								</thead>
+								<tbody>
+									<tr>
+										<td style="padding: 10px; width: 70%;   padding-right:20px; font-size:1rem; word-wrap: break-word;">
+											{{ invoice.getInvoiceServiceDescription() }}</td>
+										<td style="text-align: center;">{{ invoice.getInvoiceAmountHt() }} €</td>
+									</tr>
+
+									<tr>
+										<td style="padding-right: 0px;  padding-right:20px; text-align: right; font-size: 1rem;">TOTAL NET HT</td>
+										<td style="text-align: center;">{{ invoice.getInvoiceAmountHt() }} €</td>
+									</tr>
+									<tr>
+										<td style="text-align:right ; padding-right:20px">
+											TVA
+										</td>
+
+										<td style="text-align: center;">
+
+
+											{{ invoice.getInvoiceTaxAmount()}}
+											 €
+
+
+										</td>
+									</tr>
+									<tr>
+										<td style="text-align:right ; padding-right:20px">
+											<strong>TOTAL FACTURE A REGLER TTC EN EUROS</strong>
+										</td>
+										<td class="total-price">
+											{{ invoice.getInvoiceAmountTtc() }} €
+
+										</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+						<div class="description">
+							<h5 style="margin-bottom: 2px; ">Tous les montants sont indiqués en euros</h5>
+
+
+						</div>
+						<div class="description">
+							<p>Règlement par virement uniquement
+								<br>
+								BANQUE DOMICILIATION CAISSE D’EPARGNE PARIS OURQ
+								<br>
+								122, RUE DE FLANDRE 75019 PARIS
+								<br>
+								BANQUE : 17515 GUICHET : 90000
+								<br>
+								AGENCE : PARIS OURQ</p>
+
+
+						</div>
+
+						<div class="descriptionAux">
+							<p>
+								S.A.P.S Numéro de TVA.I.C : FR 83 841181340
+								<br/>
+								SIRET : 841 181 340 00016 RCS Paris
+								<br/>
+								Au capital de 1.000 Euros Code APE : 7022Z
+								<br>
+								Siège social : 37, av. Jean Jaurès - 75019 Paris Tél :06 14 08 31 83
+								<br/>
+								Email : contact@web-saps.fr
+								<br>
+								Prestataire de formation : Déclaration d'activité
+								<br/>
+								Enregistré sous le numéro 11755830775 auprès du Préfet de région d'Ile de France
+								<br>
+							</p>
+
+
+						</div>
+
+					</div>
+
+
+				{% endfor %}
+			{% endblock %}
+		</body>
+	</body>
+</html>
