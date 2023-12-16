@@ -47,11 +47,9 @@ class InvoiceApisController extends AbstractController {
     }
 
     public function downloadPdfGlobalInvoice( $invoices  ): Response {
-       
+
         $repository = $this->entityManager->getRepository( Invoice::class );
-
         $subInvoices = [];
-
         $globalInvoiceDetails=[];
 
         $totalAmountTtc = 0;
@@ -62,36 +60,36 @@ class InvoiceApisController extends AbstractController {
         foreach ($invoices as $invoice) {
 
             $amount = str_replace(',', '.', $invoice->getInvoiceAmountTtc());
-            $amount = preg_replace('/[^0-9.]/', '', $amount); 
-            $amount = floatval($amount); 
-           
+            $amount = preg_replace('/[^0-9.]/', '', $amount);
+            $amount = floatval($amount);
+
 
 
 
 
             $tva = str_replace(',', '.', $invoice->getInvoiceTaxAmount());
-            $tva = preg_replace('/[^0-9.]/', '', $tva); 
-            $tva = floatval($tva); 
-           
+            $tva = preg_replace('/[^0-9.]/', '', $tva);
+            $tva = floatval($tva);
+
 
             $amountHt = str_replace(',', '.', $invoice->getInvoiceAmountHt());
-            $amountHt = preg_replace('/[^0-9.]/', '', $amountHt); 
-            $amountHt = floatval($amountHt); 
-           
-          
+            $amountHt = preg_replace('/[^0-9.]/', '', $amountHt);
+            $amountHt = floatval($amountHt);
+
+
             $amount = ($amount);
             $tva = ($tva);
             $amountHt = ($amountHt);
             $totalAmountTtc += $amount;
             $totalTva += $tva;
             $totalAmountHt+=$amountHt;
-        
+
             $subInvoice = [
                 'invoiceNumber' => $invoice->getInvoiceNumber(),
                 'amount' => $amount,
                 'tva' => $tva,
                 'amountHt' => $amountHt,
-                'description' => $invoice->getCompanyName().'--'.$invoice->getClientName().'--'.$invoice->getInvoiceNumber().'('.$invoice->getInvoiceDate().')' , 
+                'description' => $invoice->getCompanyName().'--'.$invoice->getClientName().'--'.$invoice->getInvoiceNumber().'('.$invoice->getInvoiceDate().')' ,
             ];
             $subInvoices[] = $subInvoice;
         }
@@ -150,8 +148,8 @@ class InvoiceApisController extends AbstractController {
         ];
 
 
-       
-   
+
+
 
 
         $fileNameText = $invoices[0]->getCompanyName() . '-' . $globalInvoiceDetails["company"].'-'.$globalInvoiceDetails["client"].'-'.$globalInvoiceDetails["period"];
@@ -160,8 +158,7 @@ class InvoiceApisController extends AbstractController {
         $fileNameText = preg_replace( '/[^a-zA-Z0-9]/', '_', $fileNameText );
 
         $html = $this->renderView( 'invoice/globalInvoiceTemplate.html.twig', [ 'globalInvoiceDetails' => $globalInvoiceDetails , 'subInvoices' => $subInvoices  ] );
-        $snappy = new Pdf( '/var/www/vhosts/confident-darwin.212-227-197-242.plesk.page/pdf/bin/wkhtmltopdf' );
-
+        $snappy = new Pdf('/usr/bin/wkhtmltopdf');
         $pdfContent = $snappy->getOutputFromHtml( $html );
 
         $response = new Response( $pdfContent );
@@ -178,11 +175,11 @@ class InvoiceApisController extends AbstractController {
     public function generateGlobaleInvoice( Request $request): Response {
         $repository = $this->entityManager->getRepository( Invoice::class );
 
-    
+
         $selectedInvoicesArray = $request->getContent();
         $selectedInvoicesArray = json_decode($selectedInvoicesArray, true);
-        
-        
+
+
         $invoices=[];
         foreach ($selectedInvoicesArray["selectedInvoicesArray"] as $invoiceId) {
             $invoice = $repository->find( $invoiceId);
@@ -193,7 +190,7 @@ class InvoiceApisController extends AbstractController {
 
         $pdfResponse = $this->downloadPdfGlobalInvoice( $invoices );
 
-                
+
 
         return $pdfResponse;
     }
@@ -206,45 +203,55 @@ class InvoiceApisController extends AbstractController {
         $repository = $this->entityManager->getRepository( Invoice::class );
         $queryBuilder = $repository->createQueryBuilder( 'i' );
 
-        $sortOption = $request->get( 'sortOption' );
+        $jsonData = $request->getContent();
+        $formData = json_decode($jsonData, true);
+
+        $sortOption = isset($formData['sortOption']) ? rtrim($formData['sortOption']) : null;
         $sortColumn = '';
-        $invoiceSearch = rtrim( $request->get( 'invoiceSearch' ) );
 
-        $invoicePaymentStatus = rtrim( $request->get( 'filterInvoicesOption' ) );
+        $invoiceSearch = isset($formData['invoiceSearch']) ? $formData['invoiceSearch'] : null;
+        $invoicePaymentStatus = isset($formData['filterInvoicesOption']) ? rtrim($formData['filterInvoicesOption']) : null;
 
 
-            $queryBuilder->orderBy( 'i.id', 'DESC' );
+
+
+
             if ( $sortOption ) {
                 $sortDirection = substr( $sortOption, -4 );
 
                 if ( $sortDirection === 'Desc' ) {
                     $sortColumn = substr( $sortOption, 0, -4 );
 
-                    
+
                         $queryBuilder->orderBy( 'i.' . $sortColumn, 'DESC' );
-                    
+
                 } else {
                     $sortColumn = substr( $sortOption, 0, -3 );
 
-                  
+
                         $queryBuilder->orderBy( 'i.' . $sortColumn, 'ASC' );
-                    
+
                 }
+            }else {
+                $queryBuilder->orderBy( 'i.id', 'DESC' );
+
             }
 
-            $ref = $request->get( 'ref' );
-            $searchValue = $request->get( 'search' );
+            $ref = isset($formData['ref']) ? rtrim($formData['ref']) : null;
+
+
+            $searchValue = isset($formData['search']) ? rtrim($formData['search']) : null;
 
             if ( $invoicePaymentStatus!=""  ) {
                 $queryBuilder
                 ->andWhere( 'LOWER(i.company_name) LIKE :search' )
                 ->andWhere( 'LOWER(i.invoice_number) LIKE :invoiceSearch' )
-                ->andWhere( 'LOWER(i.payment_status) LIKE :paymentStatus' )
+                ->andWhere( 'LOWER(i.payment_status) = :paymentStatus' )
 
                 ->setParameters( [
                     'search' => '%' . strtolower( $searchValue ) . '%',
                     'invoiceSearch' => '%' . strtolower( $invoiceSearch ) . '%',
-                    'paymentStatus' => '%' . ( $invoicePaymentStatus ) . '%',
+                    'paymentStatus' => $invoicePaymentStatus ,
 
 
                 ] );
@@ -259,14 +266,6 @@ class InvoiceApisController extends AbstractController {
                 ]);
             }
 
-
-            // if($invoicePaymentStatus!=""){
-            //     $queryBuilder
-            //     ->where('LOWER(i.payment_status) = :paymentStatusOption')
-            //     ->setParameters( [
-            //         'paymentStatusOption' => strtolower($invoicePaymentStatus),
-            //     ]);
-            // }
 
 
 
@@ -289,38 +288,54 @@ class InvoiceApisController extends AbstractController {
                 });
             }
 
+            if ($sortOption === 'invoice_dateAsc') {
+                usort($results, function ($a, $b) {
+                    $dateA = DateTime::createFromFormat('d/m/Y', $a->getInvoiceDate());
+                    $dateB = DateTime::createFromFormat('d/m/Y', $b->getInvoiceDate());
 
-            $startDate = $request->get( 'startDate' );
-            $endDate = $request->get( 'endDate' );
+                    return $dateA <=> $dateB;
+                });
+            } elseif ($sortOption === 'invoice_dateDesc') {
+                usort($results, function ($a, $b) {
+                    $dateA = DateTime::createFromFormat('d/m/Y', $a->getInvoiceDate());
+                    $dateB = DateTime::createFromFormat('d/m/Y', $b->getInvoiceDate());
 
-           
-            
+                    return $dateB <=> $dateA;
+                });
+            }
+
+
+            $startDate = isset($formData['startDate']) ? rtrim($formData['startDate']) : null;
+            $endDate = isset($formData['endDate']) ? rtrim($formData['endDate']) : null;
+
+
+
             $filteredResults = array_filter($results, function($invoice) use ($startDate, $endDate) {
-                $invoiceDate = $invoice->getInvoiceDate(); 
+                $invoiceDate = $invoice->getInvoiceDate();
 
                 $startDate = DateTime::createFromFormat( 'd/m/Y', $startDate )->setTime( 0, 0, 0 );
                 $endDate = DateTime::createFromFormat( 'd/m/Y', $endDate )->setTime( 23, 59, 59 );
-        
+
                 $date = DateTime::createFromFormat('d/m/Y', $invoiceDate);
 
 
-        
-             
+
+
 
                 return $date >= $startDate && $date <= $endDate;
             });
 
-            
-            $invoiceListCount = $request->get( 'invoiceListCount' );
+
+            $invoiceListCount = isset($formData['invoiceListCount']) ? rtrim($formData['invoiceListCount']) : null;
 
 
             $pagination = $paginator->paginate(
                 $filteredResults,
-                $request->query->getInt( 'page', $request->get("page") ),
+                isset($formData['page']) ? rtrim($formData['page']) : 1 ,
                 $invoiceListCount,
             );
 
-            
+
 
 
             $resArray = [];
@@ -339,11 +354,14 @@ class InvoiceApisController extends AbstractController {
                     'email' => $invoice->getEmail(),
                     'totalPaid' => $invoice->getTotalPaid(),
                     'paymentStatus' => $invoice->getPaymentStatus(),
+                    'createdAt' => $invoice->getCreatedAt(),
+                    'comment' => $invoice->getInvoiceComment(),
+
                 ];
                 array_push( $resArray, $jsonArray );
             }
-            
-            
+
+
             $invoicesUniqueRefArray = $repository->createQueryBuilder( 'i' )
             ->select( 'DISTINCT i.related_invoice_ref' )
             ->getQuery()
@@ -365,13 +383,15 @@ class InvoiceApisController extends AbstractController {
     #[ Route( '/api/getInvoiceDetailsById', name: 'getInvoiceDetailsById' ) ]
     public function getInvoiceDetailsById( Request $request): Response {
         $repository = $this->entityManager->getRepository( Invoice::class );
+
+
         $invoice = $repository->findOneBy([
-            'invoice_number' => $request->get('invoice_number')
+            'invoice_number' => $request->get('invoice_number'),
         ]);
 
 
         $jsonArray=[];
-        
+
             if ($invoice) {
                 $jsonArray = [
                     'id' => $invoice->getId(),
@@ -394,9 +414,9 @@ class InvoiceApisController extends AbstractController {
                 ];
             }
 
-            
 
-            
+
+
 
             $response = new JsonResponse( [
                 'status' => 'success',
@@ -404,51 +424,63 @@ class InvoiceApisController extends AbstractController {
             ] );
 
             return $response;
-        } 
-        
-        
-    
+        }
 
-    
 
-    
-   
 
-   
-   
+
+
+
+
+
+
+
+
         #[ Route( '/api/invoices_generate', name: 'invoiceGenerate' ) ]
 
     public function addNewInvoice( Request $request, LoggerInterface $logger, SessionInterface $session ): Response {
-        $uploadedFile = $request->files->get( 'file' );
-        $startDate = $request->get( 'start' );
-        $endDate = $request->get( 'end' );
-        if ( $uploadedFile->isValid() ) {
+
+
+            $jsonData = $request->getContent();
+            $formData = json_decode($jsonData, true);
+
+
+
+            $uploadedFile = $request->files->get( 'file' );
+            $startDate = $request->get( 'start' );
+            $endDate = $request->get( 'end' );
+
+
+
+            if ( $uploadedFile->isValid() ) {
             $fileContents = file_get_contents( $uploadedFile->getRealPath() );
             $csvData = $this->parseCsvFile( $uploadedFile );
+
             $filteredInvoices = [];
             $filterKeySearch = 'date_fact';
             $indexKeyDate = array_search( $filterKeySearch, array_values( $csvData[ 0 ] ) );
             foreach ( $csvData as $key => $row ) {
+
                 if ( $key === 0 ) {
                     array_push( $filteredInvoices, $row );
                 }
                 if ( ( isset( $row[ $indexKeyDate ] ) && $key > 0 ) ) {
                     $invoiceDate = $row[ $indexKeyDate ];
-                    if($invoiceDate !=""){
+
+                    if($invoiceDate !="" && $invoiceDate !=null){
                         if ( $this->isWithinDateRange( $invoiceDate, $startDate, $endDate ) ) {
                             array_push( $filteredInvoices, $row );
                         }
                     }
-                    
+
                 }
             }
 
-           
+
+
 
             $headerRow = array_shift( $filteredInvoices );
             array_unshift( $filteredInvoices, $headerRow );
-
-
 
 
 
@@ -479,15 +511,15 @@ class InvoiceApisController extends AbstractController {
 
             if ( count( $invoicesToGenerate )>0 ) {
 
-              
+
                 $pdfResponse = $this->downloadPdfFiles( $invoicesToGenerate,  $session, $pdfFileName );
 
-                return new JsonResponse( [
-                    'pdfResponse' => $pdfResponse,
-                    'invoicesToGenerate' => count ($invoicesToGenerate),
-                ] , 200 );
-
                 return $pdfResponse;
+                // return new JsonResponse( [
+                //     'pdfResponse' => $pdfResponse,
+                //     'invoicesToGenerate' => count ($invoicesToGenerate),
+                // ] , 200 );
+
             } else {
                 return new JsonResponse( [
                     'message' => 'nofiles',
@@ -509,13 +541,144 @@ class InvoiceApisController extends AbstractController {
     #[ Route( '/api/invoices_progress', name: 'invoiceGenerationProgress' ) ]
 
     public function getInvoiceGenerationProgress( SessionInterface $session ): Response {
-        
-        $progress = $session->get( 'invoice_generation_progress', 0 );
 
+        $session->set( 'invoice_generation_progress', 3 );
         return new JsonResponse( [
             'progress' => $session->get( 'invoice_generation_progress', 0 ),
         ] );
     }
+
+
+    #[ Route( '/api/download_invoice/{id}', name: 'download_invoice' ) ]
+
+    public function downloadOneInvoice( Request $request ): Response {
+        $repository = $this->entityManager->getRepository( Invoice::class );
+        $id = $request->get( 'id' );
+
+        $invoice = $repository->find( $id );
+        $invoiceList = [];
+
+        array_push( $invoiceList, $invoice );
+        if ( !$invoice ) {
+            throw $this->createNotFoundException( 'Invoice not found' );
+        }
+
+
+        foreach ($invoiceList as $key => $invoice) {
+            $amount = $invoice->getInvoiceAmountTtc();
+            $amount = str_replace(',', '.', $amount);
+            $amount = preg_replace('/[^0-9.]/', '', $amount);
+            $invoice->setInvoiceAmountTtc($amount);
+        }
+
+
+
+
+        $date = \DateTime::createFromFormat( 'd/m/Y', $invoice->getInvoiceDate() );
+        $date->modify( 'first day of this month' );
+        $firstDay = $date->format( 'd.m.y' );
+        $date->modify( 'last day of this month' );
+        $lastDay = $date->format( 'd.m.y' );
+
+        $fileNameText = $firstDay . '-' . $lastDay . '-' . $invoice->getCompanyName() . '-' . $invoice->getInvoiceNumber();
+
+        $fileNameText = preg_replace( '/[^a-zA-Z0-9]/', '_', $fileNameText );
+
+        $html = $this->renderView( 'invoice/invoices.html.twig', [ 'invoices' => $invoiceList ] );
+
+        $snappy = new Pdf('/usr/bin/wkhtmltopdf');
+        $pdfContent = $snappy->getOutputFromHtml( $html );
+
+        $response = new Response( $pdfContent );
+        $response->headers->set( 'Content-Type', 'application/pdf' );
+        $response->headers->set( 'Content-Disposition', 'attachment; filename="Facture-'.$fileNameText.'.pdf"' );
+        $response->headers->set( 'X-FileName', $fileNameText );
+        return $response;
+    }
+
+
+    #[Route('/api/download_selected_invoices', name: 'download_selected_invoices')]
+    public function downloadSelectedInvoices(Request $request): Response {
+        $selectedInvoicesArray = $request->getContent();
+        $selectedInvoicesArray = json_decode($selectedInvoicesArray, true);
+
+        $basePath = 'pdf/';
+        $zipPath = $basePath . 'factures-selected.zip';
+        $zip = new ZipArchive();
+        $zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE);
+
+        $invoicesArray = [];
+        foreach ($selectedInvoicesArray["selectedInvoicesArray"] as $invoiceId) {
+            $repository = $this->entityManager->getRepository(Invoice::class);
+            $invoice = $repository->findOneBy([
+                'id' => $invoiceId,
+            ]);
+
+            if ($invoice) {
+                $invoicesArray[] = $invoice;
+                $amount = $invoice->getInvoiceAmountTtc();
+                $amount = str_replace(',', '.', $amount);
+                $amount = preg_replace('/[^0-9.]/', '', $amount);
+                $invoice->setInvoiceAmountTtc($amount);
+
+                $date = \DateTime::createFromFormat('d/m/Y', $invoice->getInvoiceDate());
+                $date->modify('first day of this month');
+                $firstDay = $date->format('d.m.y');
+                $date->modify('last day of this month');
+                $lastDay = $date->format('d.m.y');
+
+
+                $periodeAux = str_replace("Période : " , '' , $invoice->getInvoicePeriode());
+
+                $periodeAux = str_replace(' ' , '-' ,  $periodeAux);
+
+                $fileNameText = $periodeAux.'-' .$invoice->getCompanyName().'-'.$invoice->getInvoiceNumber();
+
+                $fileNameText = preg_replace( '/[^a-zA-Z0-9]/', '-', $fileNameText );
+
+
+                $html = $this->renderView('invoice/invoices.html.twig', ['invoices' => [$invoice]]);
+                $snappy = new Pdf('/usr/bin/wkhtmltopdf');
+                $pdfContent = $snappy->getOutputFromHtml($html);
+
+                $pdfPath = $basePath . $fileNameText . '.pdf';
+                file_put_contents($pdfPath, $pdfContent);
+
+                $zip->addFile($pdfPath, $fileNameText . '.pdf');
+            }
+        }
+
+        $zip->close();
+
+        if (file_exists($zipPath)) {
+            $response = new Response(file_get_contents($zipPath));
+            $response->headers->set('Content-Type', 'application/zip');
+            $response->headers->set('Content-Disposition', 'attachment; filename="factures-selected.zip"');
+
+            foreach ($invoicesArray as $invoice) {
+                $periodeAux = str_replace("Période : " , '' , $invoice->getInvoicePeriode());
+                $periodeAux = str_replace(' ' , '-' ,  $periodeAux);
+                $fileNameText = $periodeAux.'-' .$invoice->getCompanyName().'-'.$invoice->getInvoiceNumber();
+                $fileNameText = preg_replace('/[^a-zA-Z0-9]/', '-', $fileNameText);
+                $pdfPath = $basePath . $fileNameText . '.pdf';
+
+                if (file_exists($pdfPath)) {
+                    unlink($pdfPath);
+                }
+            }
+
+            unlink($zipPath);
+
+            return $response;
+        } else {
+            // If the zip file was not created successfully, return an error response
+            return new Response('Failed to create the zip file', 500);
+        }
+    }
+
+
+
+
 
     public function downloadPdfFiles( $invoices,  $session, $pdfFileName ): Response {
         $basePath = 'pdf/';
@@ -529,10 +692,10 @@ class InvoiceApisController extends AbstractController {
         foreach ( $invoices as $invoice ) {
 
             $html = $this->renderView( 'invoice/invoices.html.twig', [ 'invoices' => [ $invoice ] ] );
-            $snappy = new Pdf( '/var/www/vhosts/confident-darwin.212-227-197-242.plesk.page/pdf/bin/wkhtmltopdf' );
+            $snappy = new Pdf('/usr/bin/wkhtmltopdf');
             $pdfContent = $snappy->getOutputFromHtml( $html );
 
-            $date = \DateTime::createFromFormat( 'm/d/Y', $invoice->getInvoiceDate() );
+            $date = \DateTime::createFromFormat( 'd/m/Y', $invoice->getInvoiceDate() );
             $date->modify( 'first day of this month' );
             $firstDay = $date->format( 'd.m.y' );
             $date->modify( 'last day of this month' );
@@ -554,14 +717,13 @@ class InvoiceApisController extends AbstractController {
             $invoicesGenerated++;
             $progress = round( ( $invoicesGenerated / $totalInvoices ) * 100 );
 
-           
-            
             $session->set( 'invoice_generation_progress', $progress );
-
-           
+            $session->save();
         }
 
         $zip->close();
+
+
         $response = new Response();
 
         if ( file_exists( $zipPath ) ) {
@@ -579,17 +741,18 @@ class InvoiceApisController extends AbstractController {
                 $this->entityManager->persist( $invoice );
             }
             $this->entityManager->flush();
-        
+
             return $response;
 
         } else {
+
             return $response;
 
         }
 
     }
 
-    
+
 
     public function parseCurrencyValue($currencyString, $formatter)
     {
@@ -597,11 +760,11 @@ class InvoiceApisController extends AbstractController {
        $cleanedString = preg_replace('/[^0-9.,]/', '', $currencyString);
        $cleanedString = str_replace(',', '', $cleanedString);
 
-   
+
 
        return $cleanedString;
    }
-    
+
 
     private function parseCsvFile( $csvFile ) {
         $csvReader = Reader::createFromPath( $csvFile->getPathname() );
@@ -707,61 +870,18 @@ class InvoiceApisController extends AbstractController {
         return $invoices;
     }
 
-    #[ Route( '/api/download_invoice/{id}', name: 'download_invoice' ) ]
 
-    public function downloadOneInvoice( Request $request ): Response {
-        $repository = $this->entityManager->getRepository( Invoice::class );
-        $invoice = $repository->find( $request->get( 'id' ) );
-        $invoiceList = [];
-
-        array_push( $invoiceList, $invoice );
-        if ( !$invoice ) {
-            throw $this->createNotFoundException( 'Invoice not found' );
-        }
-
-
-        foreach ($invoiceList as $key => $invoice) {
-            $amount = $invoice->getInvoiceAmountTtc();
-            $amount = str_replace(',', '.', $amount); 
-            $amount = preg_replace('/[^0-9.]/', '', $amount);
-            $invoice->setInvoiceAmountTtc($amount);
-        }
-
-
-
-
-        $date = \DateTime::createFromFormat( 'm/d/Y', $invoice->getInvoiceDate() );
-        $date->modify( 'first day of this month' );
-        $firstDay = $date->format( 'd.m.y' );
-        $date->modify( 'last day of this month' );
-        $lastDay = $date->format( 'd.m.y' );
-
-        $fileNameText = $firstDay . '-' . $lastDay . '-' . $invoice->getCompanyName() . '-' . $invoice->getInvoiceNumber();
-
-        $fileNameText = preg_replace( '/[^a-zA-Z0-9]/', '_', $fileNameText );
-
-        $html = $this->renderView( 'invoice/invoices.html.twig', [ 'invoices' => $invoiceList ] );
-        $snappy = new Pdf( '/var/www/vhosts/confident-darwin.212-227-197-242.plesk.page/pdf/bin/wkhtmltopdf' );
-
-        $pdfContent = $snappy->getOutputFromHtml( $html );
-
-        $response = new Response( $pdfContent );
-        $response->headers->set( 'Content-Type', 'application/pdf' );
-        $response->headers->set( 'Content-Disposition', 'attachment; filename="Facture-'.$fileNameText.'.pdf"' );
-        $response->headers->set( 'X-FileName', $fileNameText );
-        return $response;
-    }
 
     private function isWithinDateRange( string $date, string $fromDate, string $toDate ): bool {
-      
-        
+
+
         // dd($date , $fromDate , $endDate);
 
         $fromDateAux = DateTimeImmutable::createFromFormat( 'd/m/Y', $fromDate )->setTime( 0, 0, 0 );
         $toDateAux = DateTimeImmutable::createFromFormat( 'd/m/Y', $toDate )->setTime( 23, 59, 59 );
         $dateAux = DateTimeImmutable::createFromFormat( 'd/m/Y', $date )->setTime( 0, 0, 0 );
 
-        
+
         return $dateAux >= $fromDateAux && $dateAux <= $toDateAux;
 
     }
@@ -769,8 +889,8 @@ class InvoiceApisController extends AbstractController {
     #[ Route( '/api/invoice_send_mail', name: 'invoiceSendMail' ) ]
 
     public function sendInvoiceMail( Request $request ): JsonResponse {
-       
-    $invoiceMap = []; 
+
+    $invoiceMap = [];
     $selectedInvoicesArray = $request->getContent();
     $selectedInvoicesArray = json_decode($selectedInvoicesArray, true);
 
@@ -778,7 +898,6 @@ class InvoiceApisController extends AbstractController {
 
 foreach ($selectedInvoicesArray["selectedInvoicesArray"] as $invoiceId) {
 
-    var_dump($invoiceId);
     $repository = $this->entityManager->getRepository(Invoice::class);
     $invoice = $repository->findOneBy([
         'id' => $invoiceId,
@@ -825,7 +944,7 @@ foreach ($invoiceMap as $email => $data) {
         array_push($invoiceDatesFormatted , $value);
     }
 
-   
+
 
     $html = "<html><body><p>Bonjour,  <br/><br/> Vous trouvez ci-joint la facturation SAPS.</p> <br/>";
 
@@ -835,34 +954,34 @@ foreach ($invoiceMap as $email => $data) {
             $invoicePeriode = $invoicePeriodes[$i];
             $client = $clients[$i];
 
-            
+
             $html .= "<p>".($i+1)."-Numéro facture: " . $invoiceNumber . "</p>";
             $html .= "<p>Période : " . $invoicePeriode . "</p>";
             $html .= "<p>Date de facture : " . $invoiceDate . "</p>";
             $html .= "<p>Client : " . $client . "</p><br/><br/>";
 
-            
+
         }
-        
+
         $html .= "<br/><p>Bonne réception.</p>  <p>Le service comptable SAPS</p> </body></html>";
-        
+
     $message = (new Email())
         ->from('factures@web-saps.fr')
-        // ->to($email)
-        ->to("amineammar20@icloud.com")
+        ->to($email)
+        // ->to("amineammar20@icloud.com")
         ->bcc('factures@web-saps.fr')
         ->subject('Facturation SAPS - '.$invoicePeriodes[0])
         ->html($html);
 
-        
+
     foreach ($invoices as $invoice) {
         $amount = $invoice->getInvoiceAmountTtc();
-        $amount = str_replace(',', '.', $amount); 
+        $amount = str_replace(',', '.', $amount);
         $amount = preg_replace('/[^0-9.]/', '', $amount);
         $invoice->setInvoiceAmountTtc($amount);
-        
+
         $html = $this->renderView('invoice/invoices.html.twig', ['invoices' => [$invoice]]);
-        $snappy = new Pdf('/var/www/vhosts/confident-darwin.212-227-197-242.plesk.page/pdf/bin/wkhtmltopdf');
+        $snappy = new Pdf('/usr/bin/wkhtmltopdf');
         $pdfContent = $snappy->getOutputFromHtml($html);
 
         $message->attach($pdfContent, $invoice->getCompanyName() . '-' . $invoice->getInvoiceNumber() . '.pdf', 'application/pdf');
@@ -876,7 +995,7 @@ foreach ($invoiceMap as $email => $data) {
             return new JsonResponse( [
                 'status' => 'success'
             ] );
-        
+
 
     }
 
@@ -884,10 +1003,12 @@ foreach ($invoiceMap as $email => $data) {
 
     public function updateInvoiceEmail( Request $request ): JsonResponse {
 
+
+
         try {
             $repository = $this->entityManager->getRepository( Invoice::class );
             $invoice = $repository->find( $request->get( 'id' ) );
-            // dd($invoice);
+
             $invoice->setEmail( $request->get( 'email' ) );
             $this->entityManager->persist( $invoice );
             $this->entityManager->flush();
@@ -909,6 +1030,7 @@ foreach ($invoiceMap as $email => $data) {
     #[ Route( '/api/invoice_retreive_payment/{id}', name: 'invoiceRetreiveForPayment' ) ]
 
     public function invoiceRetreiveForPayment( Request $request ): JsonResponse {
+
 
         // try {
             $repository = $this->entityManager->getRepository( Invoice::class );
@@ -955,6 +1077,9 @@ foreach ($invoiceMap as $email => $data) {
         $repository = $this->entityManager->getRepository( Invoice::class );
         $repositoryTransaction = $this->entityManager->getRepository( Transaction::class );
 
+        $jsonData = $request->getContent();
+        $formData = json_decode($jsonData, true);
+
         $invoice = $repository->find( $request->get( 'id' ) );
 
         $invoiceNumber = $invoice->getInvoiceNumber();
@@ -963,12 +1088,12 @@ foreach ($invoiceMap as $email => $data) {
 
         if($transactions){
               foreach($transactions as $transaction){
-                $this->entityManager->remove($transaction); 
+                $this->entityManager->remove($transaction);
         }
         $this->entityManager->flush();
 
         }
-      
+
 
 
     if (!$invoice) {
@@ -986,36 +1111,36 @@ foreach ($invoiceMap as $email => $data) {
                 'status' => 'deleted',
 
             ] );
-        } 
-        
+        }
+
 
 
         #[ Route( '/api/deleteInvoicesArray', name: 'deleteInvoicesArray' ) ]
         public function deleteInvoicesArray( Request $request ): JsonResponse {
-    
-    
+
+
             $repository = $this->entityManager->getRepository( Invoice::class );
             $repositoryTransaction = $this->entityManager->getRepository( Transaction::class );
 
-            
-    
-        
+
+
+
 
             $selectedInvoicesArray = $request->getContent();
             $selectedInvoicesArray = json_decode($selectedInvoicesArray, true);
-            
 
-            
+
+
             foreach ($selectedInvoicesArray["selectedInvoicesArray"] as $invoiceId) {
                 $invoice = $repository->find( $invoiceId);
 
                 $invoiceNumber = $invoice->getInvoiceNumber();
-        
+
                 $transactions = $repositoryTransaction->findBy(['invoice_number' => $invoiceNumber]);
-        
+
                 if($transactions){
                       foreach($transactions as $transaction){
-                        $this->entityManager->remove($transaction); 
+                        $this->entityManager->remove($transaction);
                 }
                 $this->entityManager->flush();
                 }
@@ -1030,53 +1155,53 @@ foreach ($invoiceMap as $email => $data) {
             }
                 return new JsonResponse( [
                     'status' => 'deleted',
-    
+
                 ] );
-            } 
-            
+            }
+
 
 
 
 
         #[ Route( '/api/globalInvoicesPayment', name: 'globalInvoicesPayment' ) ]
         public function globalInvoicesPayment( Request $request ): JsonResponse {
-    
-            
+
+
             $repository = $this->entityManager->getRepository( Invoice::class );
             $repositoryTransaction = $this->entityManager->getRepository( Transaction::class );
 
-    
+
 
             $selectedInvoicesArray = $request->getContent();
             $selectedInvoicesArray = json_decode($selectedInvoicesArray, true);
-            
-            
+
+
             foreach ($selectedInvoicesArray["selectedInvoicesArray"] as $invoiceId) {
 
                 $invoice = $repository->find( $invoiceId);
-                
+
 
 
 
 
 
         $totalPaidAux = str_replace(',', '.', $invoice->getInvoiceAmountTtc());
-        $totalPaidAux = preg_replace('/[^0-9.]/', '', $totalPaidAux); 
-        $totalPaidAux = floatval($totalPaidAux); 
-       
+        $totalPaidAux = preg_replace('/[^0-9.]/', '', $totalPaidAux);
+        $totalPaidAux = floatval($totalPaidAux);
+
 
         $totalPaid = str_replace(',', '.', $invoice->getTotalPaid());
-        $totalPaid = preg_replace('/[^0-9.]/', '', $totalPaid); 
-        $totalPaid = floatval($totalPaid); 
-       
+        $totalPaid = preg_replace('/[^0-9.]/', '', $totalPaid);
+        $totalPaid = floatval($totalPaid);
+
 
 
                 if( $invoice->getPaymentStatus() != "paid"){
                     $invoiceNumber = $invoice->getInvoiceNumber();
 
-                
 
-                
+
+
                 $date = DateTime::createFromFormat( 'd/m/Y', $invoice->getInvoiceDate());
                 $transaction = new Transaction();
 
@@ -1092,8 +1217,8 @@ foreach ($invoiceMap as $email => $data) {
                 }
 
 
-                
-        
+
+
 
                 $invoice->setTotalPaid(floatval($totalPaidAux));
                 $invoice->setPaymentStatus('paid');
@@ -1103,28 +1228,28 @@ foreach ($invoiceMap as $email => $data) {
             }
                 return new JsonResponse( [
                     'status' => 'success',
-    
+
                 ] );
-            } 
+            }
 
 
 
             #[ Route( '/api/generateCsvFromInvoices', name: 'generateCsvFromInvoices' ) ]
             public function generateCsvFromInvoices( Request $request ): Response {
-        
-                
+
+
                 $repository = $this->entityManager->getRepository( Invoice::class );
                 $repositoryTransaction = $this->entityManager->getRepository( Transaction::class );
-    
-        
-    
+
+
+
                 $selectedInvoicesArray = $request->getContent();
                 $selectedInvoicesArray = json_decode($selectedInvoicesArray, true);
-                
+
                 $csvData = [];
                 $csvFilePath = 'pdf/exportCsv.csv';
-                
-                
+
+
                 $indexAux=0;
 
                 foreach ($selectedInvoicesArray["selectedInvoicesArray"] as $invoiceId) {
@@ -1136,7 +1261,7 @@ foreach ($invoiceMap as $email => $data) {
 
                     $transactionsHistory=[];
                     foreach ($transactions as $key => $transaction) {
-                        $date = $transaction->getCreatedAt(); 
+                        $date = $transaction->getCreatedAt();
                         $formattedDate = $date->format('d-m-Y');
 
                         $transactionsHistory[]=[
@@ -1163,8 +1288,8 @@ foreach ($invoiceMap as $email => $data) {
                         }
                     }
 
-                   
-                    
+
+
                     $invoiceData = [
                         'Actif' => $invoiceId,
                         'Cabinet' => $invoice->getCompanyName(),
@@ -1182,32 +1307,33 @@ foreach ($invoiceMap as $email => $data) {
                         'email' => $invoice->getEmail(),
                         'historiquePaiements' => $stringHistory,
                     ];
-                    
+
                     $csvData[] = $invoiceData;
                 }
-    
-                   
-    
+
+
+
                 $file = fopen($csvFilePath, 'w');
                 fprintf($file, "\xEF\xBB\xBF");
 
                 fputcsv($file, array_keys($csvData[0]), ';');
-                
+
                 foreach ($csvData as $row) {
-                    fputcsv($file, $row, ';'); 
+                    fputcsv($file, $row, ';');
                 }
-                
+
                 fclose($file);
 
                 $response = new Response(file_get_contents($csvFilePath));
-                $response->headers->set('Content-Type', 'text/csv; charset=utf-8'); 
+                $response->headers->set('Content-Type', 'text/csv; charset=utf-8');
                 $response->headers->set('Content-Disposition', 'attachment; filename="invoices.csv"');
-                
+
 
                 return $response;
-    
-               
-                } 
+
+
+            }
+
 
 
 
@@ -1215,38 +1341,38 @@ foreach ($invoiceMap as $email => $data) {
 
                 #[ Route( '/api/generatePdfFromInvoices', name: 'generatePdfFromInvoices' ) ]
                 public function generatePdfFromInvoices( Request $request ): Response {
-            
-                    
+
+
                     $repository = $this->entityManager->getRepository( Invoice::class );
                     $repositoryTransaction = $this->entityManager->getRepository( Transaction::class );
-        
+
                     $selectedInvoicesArray = $request->getContent();
                     $selectedInvoicesArray = json_decode($selectedInvoicesArray, true);
-                    
+
                     $pdfData = [];
                     $csvFilePath = 'pdf/exportCsv.csv';
-                    
-                    
+
+
                     $indexAux=0;
-    
+
                     foreach ($selectedInvoicesArray["selectedInvoicesArray"] as $invoiceId) {
                         $invoice = $repository->find( $invoiceId);
                         $transactions = $repositoryTransaction->findBy([
                             'invoice_number' => $invoice->getInvoiceNumber(),
                         ]);
-    
-    
+
+
                         $transactionsHistory=[];
                         foreach ($transactions as $key => $transaction) {
-                            $date = $transaction->getCreatedAt(); 
+                            $date = $transaction->getCreatedAt();
                             $formattedDate = $date->format('d-m-Y');
 
                             $amount = str_replace(',', '.', $transaction->getTransactionAmount());
-                            $amount = preg_replace('/[^0-9.]/', '', $amount); 
-                            $amount = floatval($amount); 
-                           
-                    
-    
+                            $amount = preg_replace('/[^0-9.]/', '', $amount);
+                            $amount = floatval($amount);
+
+
+
                             $transactionsHistory[]=[
                                 'amount' => $transaction->getTransactionAmount(),
                                 'paymentMethod' => $transaction->getTransactionPaymentMethod(),
@@ -1254,7 +1380,7 @@ foreach ($invoiceMap as $email => $data) {
                                 'date' => $formattedDate,
                             ];
                         }
-    
+
 
 
                         $transactionsDetails=[];
@@ -1266,10 +1392,24 @@ foreach ($invoiceMap as $email => $data) {
                             }
                             array_push($transactionsDetails , $stringHistory);
                         }
-    
-                       
-                        $dateFact = $invoice->getInvoiceDate();
-$formattedDate = DateTime::createFromFormat('m/d/Y', $dateFact)->format('d/m/Y'); 
+
+
+                        if($invoice->getPaymentStatus() != "avoir"){
+                            $dateFact = $invoice->getInvoiceDate();
+
+                        }else{
+                            $dateFact = $invoice->getCreatedAt();
+
+                        }
+
+                        if($invoice->getPaymentStatus() != "avoir"){
+                            $totalPaidInvoice = $invoice->getTotalPaid();
+
+                        }else{
+                            $totalPaidInvoice = $invoice->getTotalPaid();
+
+                        }
+
 
                         $invoiceData = [
                             'ID' => $invoiceId,
@@ -1278,7 +1418,7 @@ $formattedDate = DateTime::createFromFormat('m/d/Y', $dateFact)->format('d/m/Y')
                             'Adress' => $invoice->getClientCompanyAddress(),
                             'CP' => $invoice->getClientCompanyPostalCode(),
                             'City' => $invoice->getClientAddressCity(),
-                            'date_fact' => $formattedDate,
+                            'date_fact' => $dateFact,
                             'Nfacture' => $invoice->getInvoiceNumber(),
                             'Periode' => $invoice->getInvoicePeriode(),
                             'amountHt' => $invoice->getInvoiceAmountHt(),
@@ -1286,18 +1426,43 @@ $formattedDate = DateTime::createFromFormat('m/d/Y', $dateFact)->format('d/m/Y')
                             'amountTtc' => $invoice->getInvoiceAmountTtc(),
                             'email' => $invoice->getEmail(),
                             'transactions' => $transactionsDetails,
-                            'totalPaid' => $invoice->getTotalPaid(),
+                            'totalPaid' => $totalPaidInvoice,
                             'status' => $invoice->getPaymentStatus(),
 
                         ];
-                        
+
                         $pdfData[] = $invoiceData;
                     }
-        
 
-        $html = $this->renderView( 'invoice/pdfExportedTemplate.html.twig', [ 'invoices' => $pdfData ] );
-        $snappy = new Pdf( '/var/www/vhosts/confident-darwin.212-227-197-242.plesk.page/pdf/bin/wkhtmltopdf' );
 
+                    $totalSumAmount=0.0;
+                    $totalSumPaidAmount=0.0;
+
+                    foreach ($pdfData as $key => $data) {
+                    //    $aux1 = str_replace(',', '.', $data['totalPaid']);
+                    //    $aux1 = preg_replace('/[^0-9.]/', '', $aux1);
+                    //    $aux1 = floatval($aux1);
+
+                       $totalSumPaidAmount+=$data['totalPaid'];
+
+
+
+                       $aux2Aux = str_replace(',', '.', $data['amountTtc']);
+                       $aux2Aux = preg_replace('/[^0-9.-]/', '', $aux2Aux);
+                       $aux2Aux = floatval($aux2Aux);
+                       $totalSumAmount += $aux2Aux;
+                    }
+
+                    $info=[
+                        "totalSumPaidAmount" =>  $totalSumPaidAmount,
+                        "totalSumAmount" =>  $totalSumAmount,
+
+                    ];
+
+
+
+        $html = $this->renderView( 'invoice/pdfExportedTemplate.html.twig', [ 'invoices' => $pdfData , 'info' => $info ] );
+        $snappy = new Pdf('/usr/bin/wkhtmltopdf');
         $snappy->setOptions(['orientation' => 'Landscape']);
         $pdfContent = $snappy->getOutputFromHtml( $html );
 
@@ -1305,14 +1470,286 @@ $formattedDate = DateTime::createFromFormat('m/d/Y', $dateFact)->format('d/m/Y')
         $response->headers->set( 'Content-Type', 'application/pdf' );
         $response->headers->set( 'Content-Disposition', 'attachment; filename="Facture.pdf"' );
         return $response;
-                       
-        
-                  
-                    
-                  
-                   
-                    } 
-    
+
+
+
+
+
+
+                    }
+
+
+
+
+
+                    #[ Route( '/api/generateAvoirForInvoice', name: 'generateAvoirForInvoice' ) ]
+                    public function generateAvoirForInvoice( Request $request ): JsonResponse {
+
+
+                        $repository = $this->entityManager->getRepository( Invoice::class );
+
+                        $selectedInvoice = $request->get('invoice_number');
+
+                        $avoirTotalAmount = $request->get('avoirTotalAmount');
+
+
+                        $comment = $request->get('commentaire');
+
+
+
+                        $invoice = $repository->findOneBy([
+                                'invoice_number' => $selectedInvoice,
+                        ]);
+
+                        $existsAvoir = $repository->findBy([
+                            'invoice_number' => $selectedInvoice.'A',
+                        ]);
+
+
+
+                        $avoirsAmountCount=0.0;
+
+
+                        foreach ($existsAvoir as $key => $existsAvoirElement) {
+
+                            $auxSum = str_replace(',', '.', $existsAvoirElement->getInvoiceAmountTtc());
+                            $auxSum = preg_replace('/[^0-9.]/', '', $auxSum);
+                            $auxSum = floatval($auxSum);
+                            $avoirsAmountCount+=$auxSum;
+
+                        }
+
+
+
+
+
+                        $amountInvoice = str_replace(',', '.', $invoice->getInvoiceAmountTtc());
+                        $amountInvoice = preg_replace('/[^0-9.]/', '', $amountInvoice);
+                        $amountInvoice = floatval($amountInvoice);
+
+                        $avoirTotalAmount = str_replace(',', '.', $avoirTotalAmount);
+                        $avoirTotalAmount = preg_replace('/[^0-9.]/', '', $avoirTotalAmount);
+                        $avoirTotalAmount = floatval($avoirTotalAmount);
+
+                        $diff = $amountInvoice-($avoirsAmountCount+$avoirTotalAmount);
+
+
+                        // dd($amountInvoice, $avoirsAmountCount , ($amountInvoice-$avoirsAmountCount),'diff:' , $diff);
+
+                        if($diff>=0){
+
+                            $amountInvoiceHT = str_replace(',', '.', $invoice->getInvoiceAmountHt());
+                        $amountInvoiceHT = preg_replace('/[^0-9.]/', '', $amountInvoiceHT);
+                        $amountInvoiceHT = floatval($amountInvoiceHT);
+
+                        $amountInvoiceTAX = str_replace(',', '.', $invoice->getInvoiceTaxAmount());
+                        $amountInvoiceTAX = preg_replace('/[^0-9.]/', '', $amountInvoiceTAX);
+                        $amountInvoiceTAX = floatval($amountInvoiceTAX);
+
+
+
+                        $amountInvoiceTAX = floatval($avoirTotalAmount)*0.2;
+                        $amountInvoiceTAX = number_format($amountInvoiceTAX, 2, '.', '');
+
+
+                        $avoirTotalAmountHT = floatval($avoirTotalAmount-$amountInvoiceTAX);
+
+
+
+                        $newAvoirInvoice = new Invoice();
+                        $newAvoirInvoice->setInvoiceNumber($selectedInvoice."A");
+                        $currentDate = date('d/m/Y', strtotime('today'));
+                        $newAvoirInvoice->setClientAddressCity($invoice->getClientAddressCity());
+                        $newAvoirInvoice->setClientCompanyAddress($invoice->getClientCompanyAddress());
+                        $newAvoirInvoice->setClientCompanyPostalCode($invoice->getClientCompanyPostalCode());
+                        $newAvoirInvoice->setClientName($invoice->getClientName());
+                        $newAvoirInvoice->setCompanyName($invoice->getCompanyName());
+                        $newAvoirInvoice->setCreatedAt($currentDate);
+                        $newAvoirInvoice->setEmail($invoice->getEmail());
+                        $newAvoirInvoice->setInvoiceAmountHt(number_format(-$avoirTotalAmountHT, 2, '.', ''));
+$newAvoirInvoice->setInvoiceAmountTtc(number_format(-$avoirTotalAmount, 2, '.', ''));
+$newAvoirInvoice->setInvoiceTaxAmount(number_format(-$amountInvoiceTAX, 2, '.', ''));
+                        $newAvoirInvoice->setInvoicePaymentCondition($invoice->getInvoicePaymentCondition());
+                        $newAvoirInvoice->setInvoiceServiceDescription($invoice->getInvoiceServiceDescription());
+                        $newAvoirInvoice->setPaymentStatus("avoir");
+
+                        $newAvoirInvoice->setTotalPaid(-$invoice->getTotalPaid());
+                        $newAvoirInvoice->setInvoiceDate($invoice->getInvoiceDate());
+                        $newAvoirInvoice->setRelatedInvoiceRef($invoice->getRelatedInvoiceRef());
+                        $newAvoirInvoice->setInvoiceComment($comment);
+
+
+                        $createdAt = DateTime::createFromFormat('d/m/Y', $currentDate);
+                        setlocale(LC_TIME, 'fr_FR');
+            $formattedDate = strftime('%B-%Y', $createdAt->getTimestamp());
+                        $newAvoirInvoice->setInvoicePeriode(strtoupper($formattedDate));
+
+                        $this->entityManager->persist( $newAvoirInvoice );
+                        $this->entityManager->flush();
+
+
+
+
+                        $amountInvoiceTAX = str_replace(',', '.', $invoice->getInvoiceTaxAmount());
+                        $amountInvoiceTAX = preg_replace('/[^0-9.]/', '', $amountInvoiceTAX);
+                        $amountInvoiceTAX = floatval($amountInvoiceTAX);
+
+
+            $info = [
+                'amountTTC'=> $amountInvoice,
+                'amountHT'=> $amountInvoiceHT,
+                'amountTVA'=> $amountInvoiceTAX,
+                'returnedAmount' => $avoirsAmountCount,
+            ];
+
+
+
+            $invoices = [];
+            array_push($invoices , $newAvoirInvoice);
+
+
+            $html = $this->renderView( 'invoice/avoirInvoiceTemplate.html.twig', [ 'invoices' => $invoices , "info" =>$info ] );
+            $snappy = new Pdf('/usr/bin/wkhtmltopdf');
+            $pdfContent = $snappy->getOutputFromHtml( $html );
+
+            $response = new Response( $pdfContent );
+            $response->headers->set( 'Content-Type', 'application/pdf' );
+            $response->headers->set( 'Content-Disposition', 'attachment; filename="Facture.pdf"' );
+            $filePdf = base64_encode($pdfContent);
+
+            $createdAt = DateTime::createFromFormat('d/m/Y', $currentDate);
+            setlocale(LC_TIME, 'fr_FR');
+$formattedDate = strftime('%B-%Y', $createdAt->getTimestamp());
+
+            $aux = $newAvoirInvoice->getCompanyName();
+
+            return new JsonResponse([
+                'status' => "success",
+                'file' => $filePdf,
+                'fileResponse' => $response,
+                'filename' => 'AVOIR-'.strtoupper($formattedDate).'-'.$aux.'-'.$selectedInvoice.'A.pdf',
+            ]);
+
+
+                        }else {
+
+                            // dd($amountInvoice , ($avoirsAmountCount) , $amountInvoice-($avoirsAmountCount));
+
+                            return new JsonResponse([
+                                'status' => "error",
+                                'message' => 'Le montant est supérieur à la valeur autorisée',
+                                'montant' => number_format($amountInvoice - $avoirsAmountCount, 2),
+                            ]);
+                        }
+
+
+
+
+
+
+         }
+
+
+
+
+
+         #[ Route( '/api/downloadAvoirInvoice}', name: 'downloadAvoirInvoice' ) ]
+
+    public function downloadAvoirInvoice( Request $request ): JsonResponse {
+        $repository = $this->entityManager->getRepository( Invoice::class );
+        $invoiceAvoir = $repository->find( $request->get( 'id' ) );
+
+        $trimmedInvoiceNumber = substr($invoiceAvoir->getInvoiceNumber(), 0, -1);
+
+
+        $invoiceRelated = $repository->findOneBy([
+            'invoice_number' => $trimmedInvoiceNumber,
+    ]);
+
+
+    $amountInvoice = str_replace(',', '.', $invoiceRelated->getInvoiceAmountTtc());
+    $amountInvoice = preg_replace('/[^0-9.]/', '', $amountInvoice);
+    $amountInvoice = floatval($amountInvoice);
+
+    $amountInvoiceHT = str_replace(',', '.', $invoiceRelated->getInvoiceAmountHt());
+    $amountInvoiceHT = preg_replace('/[^0-9.]/', '', $amountInvoiceHT);
+    $amountInvoiceHT = floatval($amountInvoiceHT);
+
+    $amountInvoiceTAX = str_replace(',', '.', $invoiceRelated->getInvoiceTaxAmount());
+    $amountInvoiceTAX = preg_replace('/[^0-9.]/', '', $amountInvoiceTAX);
+    $amountInvoiceTAX = floatval($amountInvoiceTAX);
+
+
+    $existsAvoir = $repository->findBy([
+        'invoice_number' => $invoiceAvoir->getInvoiceNumber(),
+    ]);
+
+
+
+    $avoirsAmountCount=0.0;
+
+
+    foreach ($existsAvoir as $key => $existsAvoirElement) {
+
+        $auxSum = str_replace(',', '.', $existsAvoirElement->getInvoiceAmountTtc());
+        $auxSum = preg_replace('/[^0-9.]/', '', $auxSum);
+        $auxSum = floatval($auxSum);
+        $avoirsAmountCount+=$auxSum;
+
+
+    }
+
+
+        $invoiceList = [];
+        array_push( $invoiceList, $invoiceAvoir );
+        if ( !$invoiceAvoir ) {
+            throw $this->createNotFoundException( 'Invoice not found' );
+        }
+
+
+
+
+
+
+
+
+
+
+        $info = [
+            'amountTTC'=> $amountInvoice,
+            'amountHT'=> $amountInvoiceHT,
+            'amountTVA'=> $amountInvoiceTAX,
+            'returnedAmount' => 0,
+        ];
+
+
+
+        $html = $this->renderView( 'invoice/avoirInvoiceTemplate.html.twig', [ 'invoices' => $invoiceList , 'info' =>  $info ] );
+        $snappy = new Pdf('/usr/bin/wkhtmltopdf');
+        $pdfContent = $snappy->getOutputFromHtml( $html );
+
+        $response = new Response( $pdfContent );
+        $response->headers->set( 'Content-Type', 'application/pdf' );
+        $response->headers->set( 'Content-Disposition', 'attachment; filename="Facture.pdf"' );
+        $filePdf = base64_encode($pdfContent);
+
+        $createdAt = DateTime::createFromFormat('d/m/Y', $invoiceAvoir->getInvoiceDate());
+        setlocale(LC_TIME, 'fr_FR');
+$formattedDate = strftime('%B-%Y', $createdAt->getTimestamp());
+
+        $aux = $invoiceAvoir->getCompanyName();
+        $auxAux = $invoiceAvoir->getInvoiceNumber();
+
+        return new JsonResponse([
+            'status' => "success",
+            'file' => $filePdf,
+            'fileResponse' => $response,
+            'filename' => 'AVOIR-'.strtoupper($formattedDate).'-'.$aux.'-'.$auxAux.'.pdf',
+        ]);
+
+    }
+
+
 
 
 

@@ -65,6 +65,12 @@ class Invoice
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $payment_status = null;
 
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $created_at = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $invoice_comment = null;
+
    
     
 
@@ -273,6 +279,30 @@ class Invoice
     public function setPaymentStatus(?string $payment_status): self
     {
         $this->payment_status = $payment_status;
+
+        return $this;
+    }
+
+    public function getCreatedAt(): ?string
+    {
+        return $this->created_at;
+    }
+
+    public function setCreatedAt(?string $created_at): self
+    {
+        $this->created_at = $created_at;
+
+        return $this;
+    }
+
+    public function getInvoiceComment(): ?string
+    {
+        return $this->invoice_comment;
+    }
+
+    public function setInvoiceComment(?string $invoice_comment): self
+    {
+        $this->invoice_comment = $invoice_comment;
 
         return $this;
     }

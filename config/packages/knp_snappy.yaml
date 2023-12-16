@@ -1,0 +1,11 @@
+knp_snappy:
+    pdf:
+        enabled:    true
+        binary:     /usr/bin/wkhtmltopdf
+        options:
+            - "--enable-local-file-access"
+    image:
+        enabled:    true
+        binary:     /usr/bin/wkhtmltopdf
+        options:
+            - "--enable-local-file-access"

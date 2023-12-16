@@ -36,16 +36,21 @@ class TransactionApisController extends AbstractController {
         $repository = $this->entityManager->getRepository( Transaction::class );
         $repositoryInvoice = $this->entityManager->getRepository( Invoice::class );
 
+
+        $invoiceNumber = $request->get( 'invoiceNumber');
+        $description = $request->get( 'description');
+        $amount = $request->get( 'amount');
+        $date = $request->get( 'date');
+        $method = $request->get( 'method');
+
+
         try {
             $invoice = $repositoryInvoice->findOneBy( [
-                'invoice_number' => $request->get( 'invoiceNumber' ),
+                'invoice_number' => $invoiceNumber,
             ] );
 
-            $invoiceNumber = $request->get( 'invoiceNumber' );
-            $description = $request->get( 'description' );
-            $method = $request->get( 'method' );
-            $amount = $request->get( 'amount' );
-            $date = $request->get( 'date' );
+
+
             $created_at = DateTime::createFromFormat( 'd/m/Y', $date );
 
             $transaction = new Transaction();
@@ -104,9 +109,16 @@ class TransactionApisController extends AbstractController {
     #[ Route( '/api/getInvoiceTransactionByInvoiceNumber', name: 'getInvoiceTransactionByInvoiceNumber' ) ]
 
     public function getInvoiceTransactionByInvoiceNumber( Request $request ): Response {
+
+
+        $jsonData = $request->getContent();
+        $formData = json_decode($jsonData, true);
+        $invoiceNumber = $formData['invoiceNumber'] ?? "";
+
+
         $repository = $this->entityManager->getRepository( Transaction::class );
         $transactions = $repository->findBy( [
-            'invoice_number' => $request->get( 'invoiceNumber' )
+            'invoice_number' => $invoiceNumber
         ] );
 
         $res = [];
@@ -127,12 +139,10 @@ class TransactionApisController extends AbstractController {
             array_push( $res, $jsonArray );
         }
 
-        $response = new JsonResponse( [
+        return new JsonResponse( [
             'status' => 'success',
             'transaction' => $res,
         ] );
-
-        return $response;
     }
 
 
@@ -142,9 +152,10 @@ class TransactionApisController extends AbstractController {
         $repository = $this->entityManager->getRepository( Transaction::class );
         $repositoryInvoice = $this->entityManager->getRepository( Invoice::class );
 
+        $transactionId = $request->get( 'transactionId');
 
         $transaction = $repository->findOneBy( [
-            'id' => $request->get( 'transactionId' )
+            'id' => $transactionId
         ]);
 
        

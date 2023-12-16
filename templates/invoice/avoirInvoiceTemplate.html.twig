@@ -27,10 +27,8 @@
 				width: 100%;
 				height: 100%;
 				margin: 0;
-				padding: 20px 0 0 20px;
+				padding: 0;
 			}
-
-			/*
 
 			.pdfFileMain {
 				width: 100%;
@@ -40,8 +38,6 @@
 				align-items: center;
 				flex-direction: column;
 			}
-
-
 
 			.invoicePaidImage {
 				position: absolute;
@@ -72,7 +68,7 @@
 				align-items: center;
 				flex-direction: column;
 			}
- */
+
 			.header {
 				display: flex;
 				width: 100%;
@@ -186,18 +182,11 @@
 			{% for invoice in invoices %}
 
 				<div class="pdfFileMain">
-					{#<div class="invoiceTopHeader">
-						<img src="https://api.confident-darwin.212-227-197-242.plesk.page/assets/images/logoAux.png" alt=""/>
-					</div>#}
-					{% set amount = invoice.getInvoiceAmountTtc()|replace({'€': '', ',': ''})|trim|number_format(2, '.', '') %}
-					{% set diff = amount - invoice.getTotalPaid() %}
-
-
-					{% if diff <= 0 %}
-						<div class="invoicePaidImage">
-							<img src="https://api.confident-darwin.212-227-197-242.plesk.page/assets/images/paid.png" alt=""/>
-						</div>
-					{% endif %}
+					<div class="invoiceTopHeader">
+						<img src="https://api.facturation.editeur-dentaire.fr/assets/images/logoAux.png" alt=""/>
+					</div>
+				
+				
 					<div class="invoiceHeader">
 						<table class="invoiceHeaderDescription">
 							<tr style="width:300px;">
@@ -219,24 +208,24 @@
 								<td>
 									<div class="invoiceAddress ">
 										<br/>
-										N° Facture:
+										N° AVOIR:
 										{{ invoice.getInvoiceNumber() }}
 										<br/>
-										Date de facturation :
-										{{invoice.getInvoiceDate() }}
+										Date de l'avoir :
+										{{invoice.getCreatedAt() }}
 										{# {{  invoice.getInvoiceDate() | date("d/m/Y") }} #}
 
-										<br/>
-										Condition de paiement :
-										{{ invoice.getInvoicePaymentCondition() }}
-										<br/>
-										Total facture :
-											{{ invoice.getInvoiceAmountTtc()|replace({'€': '', ',': '.' , ' ': ''}) }} €
-
-										<br/>
-										Montant déjà payé :
-											{{ invoice.getTotalPaid()|replace({' ': '', ',': '.' , ' ': ''})|number_format(2, '.', '')  }}
+										
+											<br/>
+										Total AVOIR TTC :
+											{{ invoice.getInvoiceAmountTtc()|replace({' ': '', ',': '.' , ' ': ''})|number_format(2, '.', '')  }}
 											€
+										<br/>
+										Montant restant sur la facture :
+										{% set amount = invoice.getInvoiceAmountTtc()|replace({'€': '', ',': '.' , ' ': ''})|number_format(2, '.', '') %}
+										{{ (info['amountTTC'] - info['returnedAmount'] + amount)|number_format(2, '.', '') }} €
+
+									
 
 										
 										<br/>
@@ -245,11 +234,12 @@
 											{% set amount = invoice.getInvoiceAmountTtc()|replace({'€': '', ',': '.' , ' ': ''})|number_format(2, '.', '') %}
 											{% set totalPaid = invoice.getTotalPaid()|replace({'€': '', ',': '.' , ' ': ''})|number_format(2, '.', '') %}
 
-											Reste à payer:
-											{{ (amount -  totalPaid)|number_format(2, '.', ' ') }} € 
+											Montant restant à payer:
+											{{ (amount  +  totalPaid + info['amountTTC'] - info['returnedAmount'])|number_format(2, '.', ' ') }} € 
 												{# {{ amount }} #}
 
 											
+
 
 
 										</span>
@@ -303,7 +293,7 @@
 									</tr>
 									<tr>
 										<td style="text-align:right ; padding-right:20px">
-											TVA
+											TVA 20%
 										</td>
 
 										<td style="text-align: center;">
@@ -317,7 +307,7 @@
 									</tr>
 									<tr>
 										<td style="text-align:right ; padding-right:20px">
-											<strong>TOTAL FACTURE A REGLER TTC EN EUROS</strong>
+											<strong>TOTAL AVOIR TTC EN EUROS</strong>
 										</td>
 										<td class="total-price">
 											{{ invoice.getInvoiceAmountTtc() }} €

@@ -52,6 +52,28 @@ deleteInvoicesArray:
   controller: App\Controller\InvoiceApisController::deleteInvoicesArray
   methods: [POST]
 
+
+
+generateAvoirForInvoice:
+  path: /api/generateAvoirForInvoice
+  controller: App\Controller\InvoiceApisController::generateAvoirForInvoice
+  methods: [POST]
+
+
+
+downloadAvoirInvoice:
+  path: /api/downloadAvoirInvoice
+  controller: App\Controller\InvoiceApisController::downloadAvoirInvoice
+  methods: [POST]
+
+
+
+download_selected_invoices:
+  path: /api/download_selected_invoices
+  controller: App\Controller\InvoiceApisController::downloadSelectedInvoices
+  methods: [POST]
+  
+
   
 
 invoiceGenerate:

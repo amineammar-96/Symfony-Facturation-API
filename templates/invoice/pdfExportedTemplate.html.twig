@@ -39,16 +39,16 @@
 				padding: 0;
 			}
 
-			.pdfFileMain {
+			/*.pdfFileMain {
 				width: 100%;
 				height: 100%;
 				display: flex;
 				justify-content: center;
 				align-items: center;
-				flex-direction: row; /* Change flex-direction to row */
-            transform: rotate(-90deg); /* Rotate the entire page */
+				flex-direction: row; !* Change flex-direction to row *!
+            transform: rotate(-90deg); !* Rotate the entire page *!
             transform-origin: left top;
-			}
+			}*/
 
 			.invoicePaidImage {
 				position: absolute;
@@ -218,7 +218,7 @@
 			}
 
 			.invoiceDescription .historyDiv td {
-				border-bottom: 2px solid gray;
+				border-bottom: 2px solid rgb(128, 128, 128);
 				padding: 60px 0;
 				font-size: 1.2rem;
 
@@ -233,9 +233,9 @@
 		{% block body %}
 
 				<div class="pdfFileMain">
-					<div class="invoiceTopHeader">
-						<img src="https://api.confident-darwin.212-227-197-242.plesk.page/assets/images/logoAux.png" alt=""/>
-					</div>
+				{#	<div class="invoiceTopHeader">
+						<img src="https://api.facturation.editeur-dentaire.fr/assets/images/logoAux.png" alt=""/>
+					</div>#}
 				
 					
 				
@@ -315,27 +315,16 @@
 			{% endif %}
 {% endfor %}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-									
+<tr style="padding: 20px 0; background:#ddd; text-align:center;">
+<td style="padding: 20px 20px; background:#ddd; text-align:right; " colspan="4">Total:</td>
+<td style="padding: 20px 0; background:#ddd;" colspan="1" style="text-align:center;">
+					<span>{{ info["totalSumAmount"]|number_format(2, '.', ' ')   }} €</span>
+				</td>
+				<td style="padding: 20px 0; background:#ddd;" colspan="1" style="text-align:center;">
+					<span>{{ (info["totalSumPaidAmount"])|number_format(2, '.', ' ')  }} €</span>
+				</td>
+</tr>
+	
 								</tbody>
 							</table>
 						</div>

@@ -57,10 +57,13 @@ class MollieApisController extends AbstractController {
 
     public function createUser( Request $request ): JsonResponse {
 
-        $name = $request->get( 'name' );
 
+
+
+        $name = $request->get( 'name' );
         $email = $request->get( 'email' );
         $locale = $request->get( 'locale' );
+
         $mollie = new MollieApiClient();
         $mollie->setApiKey( $this->mollieApiKey );
 
@@ -117,11 +120,13 @@ class MollieApisController extends AbstractController {
 
         $mollie = new MollieApiClient();
         $mollie->setApiKey( $this->mollieApiKey );
+        $jsonData = $request->getContent();
+        $formData = json_decode($jsonData, true);
+        $name = $formData['name'] ?? "";
+        $email = $formData['email'] ?? "";
+        $locale = $formData['locale'] ?? "";
+        $customerId = $formData['customerId'] ?? "";
 
-        $name = $request->get( 'name' );
-        $email = $request->get( 'email' );
-        $locale = $request->get( 'locale' );
-        $customerId = $request->get( 'customerId' );
 
         $customer = $mollie->customers->get( $customerId );
         $customer->name = $name;
@@ -159,10 +164,20 @@ class MollieApisController extends AbstractController {
     public function createMollieUserMandat( Request $request ): JsonResponse {
         $mollie = new MollieApiClient();
         $mollie->setApiKey( $this->mollieApiKey );
+
+       /* $jsonData = $request->getContent();
+        $formData = json_decode($jsonData, true);
+        $customerId = $formData['customerId'] ?? "";
+        $consumerAccount = $formData['consumerAccount'] ?? "";
+        $consumerBic = $formData['consumerBic'] ?? "";
+        $method = $formData['method'] ?? "";*/
+
         $customerId = $request->get( 'customerId' );
         $consumerAccount = $request->get( 'consumerAccount' );
         $consumerBic = $request->get( 'consumerBic' );
         $method = $request->get( 'method' );
+
+
 
         $customer = $mollie->customers->get( $customerId );
         $mandates = $customer->mandates();
@@ -195,7 +210,10 @@ class MollieApisController extends AbstractController {
 
     public function createMollieUserPayment( Request $request ): JsonResponse {
         $repository = $this->entityManager->getRepository( Invoice::class );
+
         $invoiceNumber = $request->get( 'invoiceNumber' );
+
+
 
         $repositoryTransaction = $this->entityManager->getRepository( Transaction::class );
 
@@ -204,11 +222,18 @@ class MollieApisController extends AbstractController {
         ] );
 
         $mollie = new MollieApiClient();
+
         $mollie->setApiKey( $this->mollieApiKey );
+
+
+
+
         $customerId = $request->get( 'customerId' );
         $amount = $request->get( 'amount' );
         $description = $request->get( 'description' );
         $companyName = $request->get( 'companyName' );
+
+
 
         $customer = $mollie->customers->get( $customerId );
         $mandates = $customer->mandates();
@@ -288,7 +313,11 @@ class MollieApisController extends AbstractController {
         $repository = $this->entityManager->getRepository( Invoice::class );
         $repositoryTransaction = $this->entityManager->getRepository( Transaction::class );
 
+        $jsonData = $request->getContent();
+        $formData = json_decode($jsonData, true);
+
         $molliePaymentId = $request->get( 'molliePaymentId' );
+
 
         $payment = $mollie->payments->get( $molliePaymentId );
 
@@ -461,7 +490,10 @@ class MollieApisController extends AbstractController {
         $mollie = new MollieApiClient();
         $mollie->setApiKey( $this->mollieApiKey );
 
+
+
         $customerId = $request->get( 'customerId' );
+
         $customer = $mollie->customers->get( $customerId );
         $mandates = $customer->mandates();
 
@@ -477,7 +509,11 @@ class MollieApisController extends AbstractController {
         $mollie = new MollieApiClient();
         $mollie->setApiKey( $this->mollieApiKey );
 
-        $paymentId = $request->get( 'paymentId' );
+        $jsonData = $request->getContent();
+        $formData = json_decode($jsonData, true);
+
+        $paymentId = $formData['paymentId'] ?? "";
+
         try {
             $mollie->payments->delete( $paymentId );
             return new JsonResponse( [
@@ -496,7 +532,11 @@ class MollieApisController extends AbstractController {
 
         $mollie = new MollieApiClient();
         $mollie->setApiKey( $this->mollieApiKey );
-        $customerId = $request->get( 'customerId' );
+
+        $jsonData = $request->getContent();
+        $formData = json_decode($jsonData, true);
+
+        $customerId = $formData['customerId'] ?? "";
 
         try {
             $mollie->customers->delete( $customerId );

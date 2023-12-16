@@ -12,6 +12,7 @@
         "doctrine/orm": "^2.15",
         "knplabs/knp-paginator-bundle": "^6.2",
         "knplabs/knp-snappy": "^1.4",
+        "knplabs/knp-snappy-bundle": "^1.9",
         "league/csv": "^9.9",
         "mollie/mollie-api-php": "^2.56",
         "nelmio/cors-bundle": "^2.3",
